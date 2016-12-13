@@ -30,22 +30,37 @@ ld <- read.csv('prosperLoanData.csv')
 
 
 ```{r clean_data, echo=FALSE}
-ld$ProsperScore <- as.factor(ld$ProsperScore) # Changing ProsperScore to a factor since the numbers represent groups.
-ld$ListingCategory..numeric. <- as.factor(ld$ListingCategory..numeric.) # Changing to factor since number represent categories
-ld$DateCreditPulled <- as.Date(ld$DateCreditPulled) # Converting strings to Dates
-ld$ListingCreationDate <- as.Date(ld$ListingCreationDate) # Converting strings to Dates
-ld$LoanOriginationDate <- as.Date(ld$LoanOriginationDate)  # Convert strings to Dates
-ld$IsUnique <- !duplicated(ld$ListingKey) #Remove Double entries
+# Changing ProsperScore to a factor since the numbers represent groups.
+ld$ProsperScore <- as.factor(ld$ProsperScore) 
+
+# Changing to factor since number represent categories
+ld$ListingCategory..numeric. <- as.factor(ld$ListingCategory..numeric.) 
+
+# Converting strings to Dates
+ld$DateCreditPulled <- as.Date(ld$DateCreditPulled) 
+
+# Converting strings to Dates
+ld$ListingCreationDate <- as.Date(ld$ListingCreationDate)
+
+# Convert strings to Dates
+ld$LoanOriginationDate <- as.Date(ld$LoanOriginationDate)
+
+#Remove Double entries
+ld$IsUnique <- !duplicated(ld$ListingKey) 
 ld <- subset(ld, IsUnique == TRUE)
 ld$IsDeptRestructuring <- ld$ListingCategory..numeric. == 1
 ```
 
 
-The data from the peer to peer lending platform Prosper contains 113.937 entries with 81 variables.
+The data from the peer to peer lending platform Prosper contains 113.937 
+entries with 81 variables.
 
-The entries represent 113.066 unique credit listings pulled from the platform between November 2005 and March 2014. Double entries were removed from the dataset.
+The entries represent 113.066 unique credit listings pulled from the platform 
+between November 2005 and March 2014. Double entries were removed from the 
+dataset.
 
-The 81 different variables contain information on the loan, the borrower and the lenders/investors.
+The 81 different variables contain information on the loan, the borrower and 
+the lenders/investors.
 
 # Univariate Plots Section
 
@@ -56,7 +71,11 @@ Several variables contain information on the loan.
 ### LoanOriginalAmount
 LoanOriginalAmount:   The origination amount of the loan.
 
-The amount of the loans range from 1,000 to 35,000 USD. This are probably the maximum and minimum amounts specified by Prosper. The distribution is negatively skewed with very distinct modes at about 4,000, 7,500, 10,000, 15,000, 20,000 and 25,000 USD. People tend to round to these numbers even while the amount they need the loan for are probably not structured like this.
+The amount of the loans range from 1,000 to 35,000 USD. This are probably the 
+maximum and minimum amounts specified by Prosper. The distribution is 
+negatively skewed with very distinct modes at about 4,000, 7,500, 10,000, 
+15,000, 20,000 and 25,000 USD. People tend to round to these numbers even while 
+the amount they need the loan for are probably not structured like this.
 
 ```{r sum_amount, echo=FALSE, message=FALSE, warning=FALSE}
 summary(ld$LoanOriginalAmount)
@@ -72,7 +91,10 @@ ggplot(ld, aes(x = LoanOriginalAmount)) +
 ### MonthlyLoanPayment
 MonthlyLoanPayment:   The scheduled monthly loan payment.
 
-The monthly payment seems to be rather low around the 200 $. There is a very high count of loans with monthly payments of about 170 USD that should be investigated. The distributions seems to be multimodal with local peaks at 100, 170, 300, 500 and 700 USD. 
+The monthly payment seems to be rather low around the 200 $. There is a very 
+high count of loans with monthly payments of about 170 USD that should be 
+investigated. The distributions seems to be multimodal with local peaks 
+at 100, 170, 300, 500 and 700 USD. 
 
 ```{r summary_monthlyloanpayment, echo=FALSE}
 summary(ld$MonthlyLoanPayment)
@@ -85,16 +107,22 @@ ggplot(data = ld, aes(x = MonthlyLoanPayment)) +
 ```
 
 ### LoanStatus
-The current status of the loan: Cancelled,  Chargedoff, Completed, Current, Defaulted, FinalPaymentInProgress, PastDue. The PastDue status will be accompanied by a delinquency bucket.
+The current status of the loan: Cancelled,  Chargedoff, Completed, Current, 
+Defaulted, FinalPaymentInProgress, PastDue. The PastDue status will be 
+accompanied by a delinquency bucket.
 
-The relative low number of cancelled loans is of no further interest and was removed from the dataset.
+The relative low number of cancelled loans is of no further interest and was 
+removed from the dataset.
 
-The amount of written off ('Chargedoff') and defaulted credits compared to the completed are unexpectedly high. About 30 % seem to be not able to pay back the loan.
+The amount of written off ('Chargedoff') and defaulted credits compared to the 
+completed are unexpectedly high. About 30 % seem to be not able to pay 
+back the loan.
 
 ```{r echo=FALSE}
-ggplot(data = as.data.frame(table(ld$LoanStatus)), aes(x = reorder(Var1, -Freq), y = Freq, fill = Freq)) + 
+ggplot(data = as.data.frame(table(ld$LoanStatus)), 
+       aes(x = reorder(Var1, -Freq), y = Freq)) + 
   ggtitle("Frequency of Loan Status (ordered)") +
-  geom_bar(stat = 'identity') + 
+  geom_bar(stat = 'identity', fill = myColor) + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
   ylab("Frequency") + 
   xlab("Loan Status") 
@@ -107,26 +135,34 @@ ld <- subset(ld, LoanStatus != 'Cancelled')
 # Make Buckets
 ld$LoanStatus.Bucket <- as.character(ld$LoanStatus)
 ld$LoanStatus.Bucket[ld$LoanStatus.Bucket == "Completed"] <- "successful"
-ld$LoanStatus.Bucket[ld$LoanStatus.Bucket == "Chargedoff" | ld$LoanStatus.Bucket == "Defaulted" ] <- "Not successful"
-ld$LoanStatus.Bucket[ld$LoanStatus.Bucket != "successful" & ld$LoanStatus.Bucket != "Not successful" ] <- "Open"
+ld$LoanStatus.Bucket[ld$LoanStatus.Bucket == "Chargedoff" | 
+                       ld$LoanStatus.Bucket == "Defaulted" ] <- "Not successful"
+ld$LoanStatus.Bucket[ld$LoanStatus.Bucket != "successful" 
+                     & ld$LoanStatus.Bucket != "Not successful" ] <- "Open"
 ld$LoanStatus.Bucket <-as.factor(ld$LoanStatus.Bucket)
 
 # Make simple bucket for employment status
 employment_stat <- c("Employed", "Full-time", "Self-employed", "Part-time")
-ld$IsEmployed <- ifelse(ld$EmploymentStatus %in% employment_stat, "Employed", "Not employed")
+ld$IsEmployed <- ifelse(ld$EmploymentStatus %in% employment_stat, 
+                        "Employed", "Not employed")
 ld$IsEmployed <- as.factor(ld$IsEmployed)
 
 ld.without_current <- subset(ld, ld$LoanStatus.Bucket != "Open")
-ld.without_current$LoanStatus.Bucket <- as.character(ld.without_current$LoanStatus.Bucket)
-ld.without_current$LoanStatus.Bucket <- as.factor(ld.without_current$LoanStatus.Bucket)
+ld.without_current$LoanStatus.Bucket <- as.character(
+  ld.without_current$LoanStatus.Bucket)
+ld.without_current$LoanStatus.Bucket <- as.factor(
+  ld.without_current$LoanStatus.Bucket)
 ```
 
-The following chart shows a more simplified view to compare the successful and defaulted loans, counting "Defaulted" and "Chargedoff" as "Not Successful", "Completed" as "Successful" and all other as "Open".
+The following chart shows a more simplified view to compare the successful 
+and defaulted loans, counting "Defaulted" and "Chargedoff" as "Not Successful", 
+"Completed" as "Successful" and all other as "Open".
 
 ```{r echo=FALSE}
-ggplot(data = as.data.frame(table(ld$LoanStatus.Bucket)), aes(x = reorder(Var1, -Freq), y = Freq, fill = Freq)) + 
+ggplot(data = as.data.frame(table(ld$LoanStatus.Bucket)), 
+       aes(x = reorder(Var1, -Freq), y = Freq)) + 
   ggtitle("Frequency of Loan Status simplyfied (ordered)") +
-  geom_bar(stat = 'identity') + 
+  geom_bar(stat = 'identity', fill = myColor, alpha = 0.6) + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
   ylab("Frequency") + 
   xlab("Loan Status") 
@@ -134,7 +170,8 @@ ggplot(data = as.data.frame(table(ld$LoanStatus.Bucket)), aes(x = reorder(Var1, 
 ld <- subset(ld, LoanStatus != 'Cancelled')
 ```
 
-The plot shows a failure rate of about 30 % of all loans (Success rate overall: 0.691).
+The plot shows a failure rate of about 30 % of all loans 
+(Success rate overall: 0.691).
 
 ```{r echo=FALSE}
 ld %>%
@@ -155,7 +192,8 @@ ld.without_current %>%
 ### Term
 Term: The length of the loan expressed in months.
 
-The absence of 2 year and 4 year loans is somewhat surprising. The majority were 3 year loans.
+The absence of 2 year and 4 year loans is somewhat surprising. 
+The majority were 3 year loans.
 
 ```{r echo=FALSE}
 sort(table(ld$Term), decreasing = TRUE)
@@ -163,9 +201,12 @@ sort(table(ld$Term), decreasing = TRUE)
 
 ### BorrowerRate and LenderYield
 Borrower Rate: The Borrower's interest rate for this loan. 
-LenderYield: The Lender yield on the loan. Lender yield is equal to the interest rate on the loan less the servicing fee.
+LenderYield: The Lender yield on the loan. Lender yield is equal to the 
+interest rate on the loan less the servicing fee.
 
-The LenderYield is a bit lower than the BorrowerRate but follows the same distribution. The distributions seems to be roughly normal except for a distinct peak at ca. 33 %. 
+The LenderYield is a bit lower than the BorrowerRate but follows the 
+same distribution. The distributions seems to be roughly normal except for 
+a distinct peak at ca. 33 %. 
 
 ```{r echo=FALSE}
 summary(ld$BorrowerRate)
@@ -174,17 +215,24 @@ summary(ld$LenderYield)
 
 ```{r echo=FALSE}
 grid.arrange(
-  ggplot(ld, aes(x = BorrowerRate)) + geom_histogram(binwidth = 0.007, fill = 'blue', alpha = 0.5),
-  ggplot(ld, aes(x = LenderYield)) + geom_histogram(binwidth = 0.007, fill = 'red', alpha = 0.5)
+  ggplot(ld, aes(x = BorrowerRate)) + 
+    geom_histogram(binwidth = 0.007, fill = 'blue', alpha = 0.5),
+  ggplot(ld, aes(x = LenderYield)) + 
+    geom_histogram(binwidth = 0.007, fill = 'red', alpha = 0.5)
   )
 ```
 
 
 ### ProsperScore
 
-ProsperScore: A custom risk score built using historical Prosper data. The score ranges from 1-10, with 10 being the best, or lowest risk score.  Applicable for loans originated after July 2009.
+ProsperScore: A custom risk score built using historical Prosper data. The 
+score ranges from 1-10, with 10 being the best, or lowest risk score.  
+Applicable for loans originated after July 2009.
 
-I treated the Score as a category rather than a continuous value since it is not known how the risk is scaled. It is also not known if 11 is a better score than 10 or if 11 marks loans without a score. Most risk scores fall in the middle range (4 to 8).
+I treated the Score as a category rather than a continuous value since it is 
+not known how the risk is scaled. It is also not known if 11 is a better score 
+than 10 or if 11 marks loans without a score. Most risk scores fall in the 
+middle range (4 to 8).
 
 ```{r echo=FALSE}
 ggplot(subset(ld, !is.na(ProsperScore)), aes(x = ProsperScore)) + 
@@ -195,13 +243,26 @@ ggplot(subset(ld, !is.na(ProsperScore)), aes(x = ProsperScore)) +
 ## Information about the borrower
 
 ### ListingCategory
-The category of the listing that the borrower selected when posting their listing: 0 - Not Available, 1 - Debt Consolidation, 2 - Home Improvement, 3 - Business, 4 - Personal Loan, 5 - Student Use, 6 - Auto, 7- Other, 8 - Baby&Adoption, 9 - Boat, 10 - Cosmetic Procedure, 11 - Engagement Ring, 12 - Green Loans, 13 - Household Expenses, 14 - Large Purchases, 15 - Medical/Dental, 16 - Motorcycle, 17 - RV, 18 - Taxes, 19 - Vacation, 20 - Wedding Loans
+The category of the listing that the borrower selected when posting their 
+listing: 0 - Not Available, 1 - Debt Consolidation, 2 - Home Improvement, 
+3 - Business, 4 - Personal Loan, 5 - Student Use, 6 - Auto, 7- Other, 
+8 - Baby&Adoption, 9 - Boat, 10 - Cosmetic Procedure, 11 - Engagement Ring, 
+12 - Green Loans, 13 - Household Expenses, 14 - Large Purchases, 
+15 - Medical/Dental, 16 - Motorcycle, 17 - RV, 18 - Taxes, 19 - Vacation, 
+20 - Wedding Loans
 
-The borrowers mostly specified "Debt Consolidation" as their intended use what is reasonable. Quite some did not specify the purpose. Other notable uses were "Home Improvement" and "Business".
+The borrowers mostly specified "Debt Consolidation" as their intended use what 
+is reasonable. Quite some did not specify the purpose. Other notable uses were 
+"Home Improvement" and "Business".
 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE, fig.width=10}
-cat_names <- c("Not Available", "Debt Consolidation", "Home Improvement",  "Business","Personal Loan", "Student Use", "Auto", "Other", "Baby&Adoption", "Boat", "Cosmetic Procedure", "Engagement Ring", "Green Loans", "Household Expenses", "Large Purchases", "Medical/Dental", "Motorcycle", "RV", "Taxes", "Vacation", "Wedding Loans")
+cat_names <- c("Not Available", "Debt Consolidation", "Home Improvement",  
+               "Business","Personal Loan", "Student Use", "Auto", "Other", 
+               "Baby&Adoption", "Boat", "Cosmetic Procedure", "Engagement Ring", 
+               "Green Loans", "Household Expenses", "Large Purchases", 
+               "Medical/Dental", "Motorcycle", "RV", "Taxes", "Vacation", 
+               "Wedding Loans")
 ggplot(ld, aes(x = ListingCategory..numeric.)) + 
   geom_bar(fill = myColor, alpha = 0.8) + 
   scale_x_discrete(labels = cat_names) + 
@@ -212,11 +273,16 @@ ggplot(ld, aes(x = ListingCategory..numeric.)) +
 ### Occupation
 The Occupation selected by the Borrower at the time they created the listing.
 
-The factor includes 68 unique options. The biggest group was "Other" and another group left the field blank. There is a good chance this was to protect their privacy. If the data is true, some of the occupations are surprising: I would guess that Doctors, Judges, Dentist or other respectable professions would have other - less expensive options - to fund them self.
+The factor includes 68 unique options. The biggest group was "Other" and 
+another group left the field blank. There is a good chance this was to protect 
+their privacy. If the data is true, some of the occupations are surprising: 
+I would guess that Doctors, Judges, Dentist or other respectable professions 
+would have other - less expensive options - to fund them self.
 
 
 ```{r echo=FALSE}
-ggplot(as.data.frame(sort(table(ld$Occupation), decreasing = TRUE)[0:10]), aes(x = Var1, y = Freq)) + 
+ggplot(as.data.frame(sort(table(ld$Occupation), decreasing = TRUE)[0:10]), 
+       aes(x = Var1, y = Freq)) + 
   geom_bar(stat = "identity", fill = myColor, alpha = 0.8) + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
   xlab("10 Most Common Occupations")
@@ -226,7 +292,9 @@ ggplot(as.data.frame(sort(table(ld$Occupation), decreasing = TRUE)[0:10]), aes(x
 The employment status of the borrower at the time they posted the listing.
 
 ```{r echo=FALSE}
-ggplot(as.data.frame(table(subset(ld, !is.na(EmploymentStatus))$EmploymentStatus)), aes(x = reorder(Var1, -Freq), y = Freq)) +
+ggplot(as.data.frame(table(subset(ld, 
+                                  !is.na(EmploymentStatus))$EmploymentStatus)), 
+       aes(x = reorder(Var1, -Freq), y = Freq)) +
   geom_bar(stat = "identity", fill = myColor, alpha = 0.8) + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) + 
   xlab("Employment Status") + ylab("Count")
@@ -235,17 +303,20 @@ ggplot(as.data.frame(table(subset(ld, !is.na(EmploymentStatus))$EmploymentStatus
 A simplified  shows that the unemployed are a minority.
 
 ```{r echo=FALSE}
-ggplot(as.data.frame(table(ld$IsEmployed)), aes(x = "", y = Freq, fill = Var1)) + 
+ggplot(as.data.frame(table(ld$IsEmployed)), 
+       aes(x = "", y = Freq, fill = Var1)) + 
   geom_bar(stat = "identity")+
   coord_polar("y", start = 0) + 
-  scale_fill_brewer(palette="Blues", guide = guide_legend(title = "Status")) +
+  scale_fill_brewer(palette="Blues", 
+                    guide = guide_legend(title = "Status")) +
   theme_minimal() +
   xlab("") + 
   ylab("")
 ```
 
 ### EmploymentStatusDuration
-The length in months of the employment status at the time the listing was created.
+The length in months of the employment status at the time the listing was 
+created.
 
 ```{r echo=FALSE}
 summary(ld$EmploymentStatusDuration)
@@ -258,9 +329,11 @@ ggplot(data = ld, aes(x = EmploymentStatusDuration)) +
 
 
 ### IsBorrowerHomeowner
-A Borrower will be classified as a homeowner if they have a mortgage on their credit profile or provide documentation confirming they are a homeowner.
+A Borrower will be classified as a homeowner if they have a mortgage on their 
+credit profile or provide documentation confirming they are a homeowner.
 
-About every second borrower is a home owner. This might raise the question why they wont use the house to get a bank loan on the house.
+About every second borrower is a home owner. This might raise the question why 
+they wont use the house to get a bank loan on the house.
 
 ```{r echo=FALSE}
 ggplot(ld, aes(x = IsBorrowerHomeowner)) + 
@@ -269,9 +342,11 @@ ggplot(ld, aes(x = IsBorrowerHomeowner)) +
 
 
 ### CurrentlyInGroup / GroupKey 
-Specifies whether or not the Borrower was in a group at the time the listing was created.
+Specifies whether or not the Borrower was in a group at the time the listing 
+was created.
 
-The Key of the group in which the Borrower is a member of. Value will be null if the borrower does not have a group affiliation.
+The Key of the group in which the Borrower is a member of. Value will be null 
+if the borrower does not have a group affiliation.
 
 Only 12,712 borrowers were in one of 707 distinct groups.
 
@@ -305,9 +380,13 @@ summary(ld$AmountDelinquent)
 ```
 
 ### IncomeRage
-IncomeRange	The income range of the borrower at the time the listing was created.
+IncomeRange	The income range of the borrower at the time the listing was 
+created.
 
-Most borrowers specified an income range. The majority had an annual income between 25,000 USD and 100,000 USD with quite some incomes above 100,000 USD. This was unexpected, since these borrowers would probably also have access to cheaper loan from other sources.
+Most borrowers specified an income range. The majority had an annual income 
+between 25,000 USD and 100,000 USD with quite some incomes above 100,000 USD. 
+This was unexpected, since these borrowers would probably also have access to 
+cheaper loan from other sources.
 
 ```{r echo=FALSE}
 ggplot(ld, aes(x = ordered(IncomeRange, 
@@ -326,7 +405,8 @@ ggplot(ld, aes(x = ordered(IncomeRange,
 
 
 ### IncomeVerifiable
-IncomeVerifiable	The borrower indicated they have the required documentation to support their income.
+IncomeVerifiable	The borrower indicated they have the required documentation 
+to support their income.
 
 Most borrowers marked their income as verifiable. 
 
@@ -336,9 +416,12 @@ summary(ld$IncomeVerifiable)
 
 
 ### StatedMonthlyIncome  
-StatedMonthlyIncome	The monthly income the borrower stated at the time the listing was created.
+StatedMonthlyIncome	The monthly income the borrower stated at the time the 
+listing was created.
 
-The stated monthly income ranges from 0 to nearly 2 Mil. 75 % stated an income of at leas 3,200 USD per month. There are several very distinct peaks in the histogram maybe indication some sort of clusters. 
+The stated monthly income ranges from 0 to nearly 2 Mil. 75 % stated an income 
+of at leas 3,200 USD per month. There are several very distinct peaks in the 
+histogram maybe indication some sort of clusters. 
 
 
 ```{r echo=FALSE}
@@ -356,9 +439,11 @@ ggplot(ld, aes(x = StatedMonthlyIncome)) +
 ## About the Investors
 
 ### Recommendations
-Recommendations:	Number of recommendations the borrower had at the time the listing was created.
+Recommendations:	Number of recommendations the borrower had at the time 
+the listing was created.
 
-Only 4,257 borrowers had Recommendations at all. Maybe the feature wasn't used that much.
+Only 4,257 borrowers had Recommendations at all. Maybe the feature wasn't used 
+that much.
 
 
 ```{r echo=FALSE}
@@ -370,9 +455,12 @@ sum(ld$Recommendations != 0)
 ```
 
 ### InvestmentFromFriendsCount
-InvestmentFromFriendsCount:	Number of friends that made an investment in the loan.
+InvestmentFromFriendsCount:	Number of friends that made an investment in the 
+loan.
 
-Only 2,131 borrowers hand friends investing in them through the platform. This might be due to the reason that Prosper takes a few and friends can just borrow money directly skipping the fee.
+Only 2,131 borrowers hand friends investing in them through the platform. This 
+might be due to the reason that Prosper takes a few and friends can just borrow 
+money directly skipping the fee.
 
 ```{r echo=FALSE}
 summary(ld$InvestmentFromFriendsCount)
@@ -401,18 +489,23 @@ ggplot(ld, aes(x = Investors)) +
 
 ### What is the structure of your dataset?
 
-There are 113,937 unique loans from the peer to peer lending platform Prosper. The data contains 81 different features about the loan, the borrower and the investors/lenders.
+There are 113,937 unique loans from the peer to peer lending platform Prosper. 
+The data contains 81 different features about the loan, the borrower and the 
+investors/lenders.
 
 I analyzed the following features:
 
 * LoanOriginalAmount
-Most loans were in a lower range. The median is 6,300 USD and the mean 8,135 USD.
+Most loans were in a lower range. The median is 6,300 USD and the
+mean 8,135 USD.
 
 * MonthlyLoanPayment
-Most loan payments are below 370 USD per month (3rd quartile). There is an unexpected spike at 170 USD per month.
+Most loan payments are below 370 USD per month (3rd quartile). There is an 
+unexpected spike at 170 USD per month.
 
 * Loan Status
-Factor that shows if the loan is current, if it was payed back or if the borrower did not pay it pack.
+Factor that shows if the loan is current, if it was payed back or if the 
+borrower did not pay it pack.
 
 * Term
 The length of the loan expressed in months.
@@ -420,15 +513,19 @@ The length of the loan expressed in months.
 * BorrowerRate
 * LenderYield
 
-Interest for the borrower and the lender per annum. The max is with nearly 50 % very height. The mean and median are with about 18.4 % and 19.3 % are also very high.
+Interest for the borrower and the lender per annum. The max is with nearly 50 % 
+very height. The mean and median are with about 18.4 % and 19.3 % are also very 
+high.
 
 * Prosper Score
 A custom risk score built using historical Prosper data. Used as a factor.
 
 * ListingCategory
-The category of the listing that the borrower selected when posting their listing.
+The category of the listing that the borrower selected when posting their 
+listing.
 
-Many borrowers did not specify a category. Those who did mostly choose Debt Consolidation.
+Many borrowers did not specify a category. Those who did mostly choose 
+Debt Consolidation.
 
 * Occupation
 The Occupation selected by the Borrower at the time they created the listing.
@@ -439,16 +536,19 @@ The most often chosen occupation was "Other".
 The employment status of the borrower at the time they posted the listing.
 
 * EmploymentStatusDuration
-The length in months of the employment status at the time the listing was created.
+The length in months of the employment status at the time the listing was 
+created.
 
 * IsBorrowerHomeowner
 About half of the borrowers specified they were homeowners.
 
 * CurrentlyInGroup 
 * GroupKey
-Specifies whether or not the Borrower was in a group at the time the listing was created.
+Specifies whether or not the Borrower was in a group at the time the listing 
+was created.
 
-The Key of the group in which the Borrower is a member of. Value will be null if the borrower does not have a group affiliation
+The Key of the group in which the Borrower is a member of. Value will be null 
+if the borrower does not have a group affiliation
 
 Only few people were in a group.
 
@@ -459,7 +559,8 @@ Number of accounts delinquent at the time the credit profile was pulled.
 Dollars delinquent at the time the credit profile was pulled.
 
 * IncomeRage
-IncomeRange The income range of the borrower at the time the listing was created.
+IncomeRange The income range of the borrower at the time the listing was 
+created.
 
 A factor containing the levels 
 "$0"
@@ -476,14 +577,16 @@ A factor containing the levels
 Most borrowers marked their income as verifiable.
 
 * StatedMonthlyIncome
-StatedMonthlyIncome The monthly income the borrower stated at the time the listing was created.
+StatedMonthlyIncome The monthly income the borrower stated at the time the 
+listing was created.
 
 75 % stated an income of at leas 3,200 USD per month.
 
 * DeptToIncomeRatio
 
 * Recommendations
-Recommendations: Number of recommendations the borrower had at the time the listing was created.
+Recommendations: Number of recommendations the borrower had at the time the 
+listing was created.
 
 Only 4,257 borrowers had Recommendations at all.
 
@@ -493,7 +596,8 @@ Only 2,131 borrowers hand friends investing in them through the platform.
 * Investors
 The number of investors that funded the loan.
 
-The listings were pulled from the Prosper database between November 2005 and March 2014. Double entries were removed from the dataset.
+The listings were pulled from the Prosper database between November 2005 and 
+March 2014. Double entries were removed from the dataset.
 
 
 ### What is/are the main feature(s) of interest in your dataset?
@@ -503,26 +607,35 @@ The main interest is in these two features:
 * LoanStatus
 * BorrowerYield
 
-I try to find out which features can predict if the loan will be payed back and what features influence the yield of the loan.
+I try to find out which features can predict if the loan will be payed back and 
+what features influence the yield of the loan.
 
-### What other features in the dataset do you think will help support your investigation into your feature(s) of interest?
+### What other features in the dataset do you think will help support your 
+### investigation into your feature(s) of interest?
 
-The income, occupation, employment status will likely influence the success and the yield of the loan.
+The income, occupation, employment status will likely influence the success and 
+the yield of the loan.
 
 ### Did you create any new variables from existing variables in the dataset?
 
-I created a simplified factor for the loan status only looking at Open, Successful, Not successful. Overdue payments were counted as Open and defaulted and written off were both counted as Not successful.
+I created a simplified factor for the loan status only looking at Open, 
+Successful, Not successful. Overdue payments were counted as Open and defaulted 
+and written off were both counted as Not successful.
 
 I created a new factor only distinguishing between employed or not employed.
 
-### Of the features you investigated, were there any unusual distributions? Did you perform any operations on the data to tidy, adjust, or change the form of the data? If so, why did you do this?
+### Of the features you investigated, were there any unusual distributions? 
+### Did you perform any operations on the data to tidy, adjust, or change the 
+### form of the data? If so, why did you do this?
 
-There were a few hundred double entries that were cleaned. These were inspected and removed. 
+There were a few hundred double entries that were cleaned. These were inspected 
+and removed. 
 
 
 # Bivariate Plots Section
 
-I'm first looking at the difference between the group of successful loans and the loans that were not payed back. The table shows several differences.
+I'm first looking at the difference between the group of successful loans and 
+the loans that were not payed back. The table shows several differences.
 
 ```{r Bivariate_Plots, echo=FALSE, fig.height=12, fig.width=12, message=FALSE, warning=FALSE}
 set.seed(3)
@@ -538,6 +651,7 @@ ld_subset <- ld.without_current[, c(
 ggpairs(ld_subset[sample.int(nrow(ld_subset), 10000), ])
 ```
 
+## StatedIncome and Success
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 ld.without_current %>%
@@ -545,21 +659,27 @@ ld.without_current %>%
   summarise(mean_stated_income = mean(StatedMonthlyIncome),
             mean_loan_amount = mean(LoanOriginalAmount),
             mean_borrower_rate = mean(BorrowerRate),
-            mean_debt_to_inc_ratio = mean(DebtToIncomeRatio, na.rm = TRUE),
-            mean_duration_employment = mean(EmploymentStatusDuration, na.rm = TRUE),
+            mean_debt_to_inc_ratio = mean(DebtToIncomeRatio, 
+                                          na.rm = TRUE),
+            mean_duration_employment = mean(EmploymentStatusDuration, 
+                                            na.rm = TRUE),
             n = n())
 ```
 
-There is a strong correlation between the success of an loan an the stated monthly income. The difference between the groups is about - 666 USD in income per month.
+There is a strong correlation between the success of an loan an the stated 
+monthly income. The difference between the groups is about - 666 USD in 
+income per month.
 
 ```{r echo=FALSE, warning=FALSE,message=FALSE}
-ggplot(ld.without_current, aes(x = LoanStatus.Bucket, y = StatedMonthlyIncome)) + 
+ggplot(ld.without_current, 
+       aes(x = LoanStatus.Bucket, y = StatedMonthlyIncome)) + 
   geom_boxplot(fill = myColor, alpha = 0.5) +
   ylim(-1, 25000)
 ```
 
 ```{r echo=FALSE}
-wilcox.test(StatedMonthlyIncome ~ LoanStatus.Bucket, data = ld.without_current, conf.int=TRUE)
+wilcox.test(StatedMonthlyIncome ~ LoanStatus.Bucket, data = ld.without_current, 
+            conf.int=TRUE)
 ```
 
 ```{r echo=FALSE}
@@ -572,7 +692,13 @@ ld.without_current %>%
   )
 ```
 
-The amount of the loan follows a similar distribution for the successful and not successful loans. The mean amount for the failed is  a bit higher. At an alpha level of 0.05 the difference would still be significant. The effect is very low. This might change looking only at specific parts. All loans above 25,000 USD were always payed back. 
+## Amount and Success
+
+The amount of the loan follows a similar distribution for the successful and 
+not successful loans. The mean amount for the failed is  a bit higher. At an 
+alpha level of 0.05 the difference would still be significant. The effect is
+very low. This might change looking only at specific parts. All loans above 
+25,000 USD were always payed back. 
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, fig.width=8}
 ggplot(ld.without_current, aes(x = LoanOriginalAmount)) + 
@@ -592,14 +718,18 @@ ld.without_current %>%
 ```
 
 ```{r echo=FALSE}
-wilcox.test(LoanOriginalAmount ~ LoanStatus.Bucket, data = ld.without_current, conf.int = TRUE)
+wilcox.test(LoanOriginalAmount ~ LoanStatus.Bucket, data = ld.without_current, 
+            conf.int = TRUE)
 ```
 
-The short 12 month loans seems the be very save with a success rate of nearly 95 %. The difference between the 3 year and the 5 year loan is relatively low.
+## Term and Success
+
+The short 12 month loans seems the be very save with a success rate of nearly 
+95 %. The difference between the 3 year and the 5 year loan is relatively low.
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
-ggplot(ld.without_current, aes(x = Term)) + 
-  geom_histogram(fill = myColor) + 
+ggplot(ld.without_current, aes(x = as.factor(Term))) + 
+  geom_histogram(fill = myColor, stat = "count") + 
   facet_wrap(~LoanStatus.Bucket)
 ```
 
@@ -608,12 +738,16 @@ ld.without_current %>%
   group_by(Term) %>%
   summarise(
     success_ratio = sum(LoanStatus.Bucket == "successful") / 
-      (sum(LoanStatus.Bucket == "successful") + sum(LoanStatus.Bucket != "successful")),
+      (sum(LoanStatus.Bucket == "successful") + 
+         sum(LoanStatus.Bucket != "successful")),
     n = n()
   )
 ```
 
-The borrower rate for the successful loans is a lot lower than for the not successful loans. The average rate is 4.95 % lower with the successful loans.
+## BorrowerRate and Success
+
+The borrower rate for the successful loans is a lot lower than for the not 
+successful loans. The average rate is 4.95 % lower with the successful loans.
 
 ```{r echo=FALSE}
 ggplot(ld.without_current, aes(x = LoanStatus.Bucket, y = BorrowerRate)) + 
@@ -621,10 +755,14 @@ ggplot(ld.without_current, aes(x = LoanStatus.Bucket, y = BorrowerRate)) +
 ```
 
 ```{r echo=FALSE}
-wilcox.test(BorrowerRate ~ LoanStatus.Bucket, data = ld.without_current, conf.int = TRUE)
+wilcox.test(BorrowerRate ~ LoanStatus.Bucket, data = ld.without_current, 
+            conf.int = TRUE)
 ```
 
-As expected, the employed borrowers tend to pay back their loan more often, although the failure rate for the unemployed is still below 50 %.
+## Employment and Success
+
+As expected, the employed borrowers tend to pay back their loan more often, 
+although the failure rate for the unemployed is still below 50 %.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(ld.without_current, aes(x = LoanStatus.Bucket)) + 
@@ -637,18 +775,23 @@ ld.without_current %>%
   group_by(IsEmployed) %>%
   summarise(
     success_ratio = sum(LoanStatus.Bucket == "successful") / 
-      (sum(LoanStatus.Bucket == "successful") + sum(LoanStatus.Bucket != "successful")),
+      (sum(LoanStatus.Bucket == "successful") + 
+         sum(LoanStatus.Bucket != "successful")),
     n = n())
 ```
 
 ```{r echo=FALSE}
-chisq.test(table(ld.without_current$LoanStatus.Bucket, ld.without_current$IsEmployed))
+chisq.test(table(ld.without_current$LoanStatus.Bucket, 
+                 ld.without_current$IsEmployed))
 ```
+
+## Investors and Success
 
 The successful loans had more investors on average. This might point to some sort of social network effect, people warning each other or similar.
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
-ggplot(ld.without_current, aes(x = LoanStatus.Bucket, y = Investors)) + 
+ggplot(ld.without_current, 
+       aes(x = LoanStatus.Bucket, y = Investors)) + 
   geom_boxplot(fill = myColor, alpha = 0.5)
 ```
 
@@ -663,10 +806,14 @@ ld.without_current %>%
 ```
 
 ```{r echo=FALSE}
-wilcox.test(Investors ~LoanStatus.Bucket, data = ld.without_current, conf.int=TRUE)
+wilcox.test(Investors ~LoanStatus.Bucket, data = ld.without_current, 
+            conf.int=TRUE)
 ```
 
-Loans with investment from friends were more likely to be successful. Most people did not have investment from friends.
+## InvestmentFromFriends and Success
+
+Loans with investment from friends were more likely to be successful. 
+Most people did not have investment from friends.
 
 ```{r echo=FALSE}
 ld.without_current %>%
@@ -679,20 +826,27 @@ ld.without_current %>%
 ```
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
-ld.without_current$HasInvestmentFromFriends <- ld.without_current$InvestmentFromFriendsCount >= 1
+ld.without_current$HasInvestmentFromFriends <- 
+  ld.without_current$InvestmentFromFriendsCount >= 1
 ld.without_current %>%
   group_by(HasInvestmentFromFriends) %>%
   summarise(
     success_ratio = sum(LoanStatus.Bucket == "successful") / 
-      (sum(LoanStatus.Bucket == "successful") + sum(LoanStatus.Bucket != "successful")),
+      (sum(LoanStatus.Bucket == "successful") + 
+         sum(LoanStatus.Bucket != "successful")),
     n = n()
   )
 ```
 
-As expected, the success rate becomes better with a higher ProsperScore
+## ProsperScore and Success
+
+As expected, the success rate becomes better with a higher ProsperScore. The
+loans without a prosper score were removed as outliers from the following
+plot.
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, fig.width=10}
-ggplot(ld.without_current, aes(x = LoanStatus.Bucket, fill = LoanStatus.Bucket)) + 
+ggplot(subset(ld.without_current, !is.na(ld.without_current$ProsperScore)), 
+       aes(x = LoanStatus.Bucket, fill = LoanStatus.Bucket)) + 
   geom_histogram(stat = "count") + 
   facet_wrap(~ProsperScore) +
   ggtitle("Success for different ProsperScores")
@@ -703,15 +857,22 @@ ld.without_current %>%
   group_by(ProsperScore) %>%
   summarise(
     success_ratio = sum(LoanStatus.Bucket == "successful") / 
-      (sum(LoanStatus.Bucket == "successful") + sum(LoanStatus.Bucket != "successful")),
+      (sum(LoanStatus.Bucket == "successful") + 
+         sum(LoanStatus.Bucket != "successful")),
     n = n()
   )
 ```
 
-The borrower could state a purpose for the loan. Only looking at categories with n > 50, Motorcycle was the best. No specification is a risk since these were the least reliable loans. The most common category Debt Restructuring still had a slightly better than average rate. 
+## Listing and Success
+
+The borrower could state a purpose for the loan. Only looking at categories 
+with n > 50, Motorcycle was the best. No specification is a risk since these 
+were the least reliable loans. The most common category Debt Restructuring 
+still had a slightly better than average rate. 
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, fig.width=10}
-ggplot(ld.without_current, aes(x = ListingCategory..numeric., fill = LoanStatus.Bucket)) + 
+ggplot(ld.without_current, 
+       aes(x = ListingCategory..numeric., fill = LoanStatus.Bucket)) + 
   geom_histogram(stat = "count") + 
   scale_x_discrete(labels = cat_names) + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1))
@@ -743,13 +904,17 @@ cat_names.code <- c(
   "Vacation" = 19, 
   "Wedding Loans" = 20)
 
-ld.without_current$ListingCategory..names. <- ld.without_current$ListingCategory..numeric.
-ld.without_current$ListingCategory..names. <- names(cat_names.code)[match(ld.without_current$ListingCategory..names., cat_names.code)]
+ld.without_current$ListingCategory..names. <- 
+  ld.without_current$ListingCategory..numeric.
+ld.without_current$ListingCategory..names. <- 
+  names(cat_names.code)[match(ld.without_current$ListingCategory..names., 
+                              cat_names.code)]
 ld.without_current %>%
   group_by(ListingCategory..names.) %>%
   summarise(
     success_ratio = sum(LoanStatus.Bucket == "successful") / 
-      (sum(LoanStatus.Bucket == "successful") + sum(LoanStatus.Bucket != "successful")),
+      (sum(LoanStatus.Bucket == "successful") + 
+         sum(LoanStatus.Bucket != "successful")),
     n = n()
   ) %>%
   filter(n >= 50) %>%
@@ -757,16 +922,21 @@ ld.without_current %>%
 ```
 
 
-Only looking at professions who had at least 100 loans, Military Officers seem to be the most reliable.
+## Occupation and Success
+
+Only looking at professions who had at least 100 loans, 
+Military Officers seem to be the most reliable.
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 tmp <- ld.without_current %>%
   group_by(Occupation) %>%
   summarise(
     success_ratio = sum(LoanStatus.Bucket == "successful") / 
-      (sum(LoanStatus.Bucket == "successful") + sum(LoanStatus.Bucket != "successful")),
+      (sum(LoanStatus.Bucket == "successful") + 
+         sum(LoanStatus.Bucket != "successful")),
     fail_ratio = sum(LoanStatus.Bucket != "successful") / 
-      (sum(LoanStatus.Bucket == "successful") + sum(LoanStatus.Bucket != "successful")),
+      (sum(LoanStatus.Bucket == "successful") + 
+         sum(LoanStatus.Bucket != "successful")),
     n = n()
   ) %>%
   filter(n >= 100) %>%
@@ -775,8 +945,9 @@ tmp
 ```
 
 ```{r echo=FALSE, fig.width=12}
-ggplot(tmp, aes(x = reorder(Occupation, -success_ratio), y = success_ratio, fill = success_ratio)) + 
-  geom_bar(stat= "identity") + 
+ggplot(tmp, aes(x = reorder(Occupation, -success_ratio), 
+                y = success_ratio)) + 
+  geom_bar(stat= "identity", fill = myColor, alpha = 0.7) + 
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
   xlab("Occupation ordered by success rate")
 ```
@@ -787,10 +958,14 @@ The Military Officers also payed less interest.
 print("All borrowers:")
 summary(ld.without_current$BorrowerRate)
 print("Only Military Officers:")
-summary(subset(ld.without_current, Occupation == "Military Officer")$BorrowerRate)
+summary(subset(ld.without_current, 
+               Occupation == "Military Officer")$BorrowerRate)
 ```
 
-The homeowners were a bit more likely to pay back the loan but not by much. The p value is still very low so the difference is still significant.
+## Homeowner and Success
+
+The homeowners were a bit more likely to pay back the loan but not by much. 
+The p value is still very low so the difference is still significant.
 
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
@@ -798,47 +973,59 @@ ld.without_current %>%
   group_by(IsBorrowerHomeowner) %>%
   summarise(
     success_ratio = sum(LoanStatus.Bucket == "successful") / 
-      (sum(LoanStatus.Bucket == "successful") + sum(LoanStatus.Bucket != "successful")),
+      (sum(LoanStatus.Bucket == "successful") + 
+         sum(LoanStatus.Bucket != "successful")),
     fail_ratio = sum(LoanStatus.Bucket != "successful") / 
-      (sum(LoanStatus.Bucket == "successful") + sum(LoanStatus.Bucket != "successful")),
+      (sum(LoanStatus.Bucket == "successful") + 
+         sum(LoanStatus.Bucket != "successful")),
     n = n()
     )
 ```
 
 ```{r echo=FALSE}
-chisq.test(table(ld.without_current$IsBorrowerHomeowner, ld.without_current$LoanStatus.Bucket))
+chisq.test(table(ld.without_current$IsBorrowerHomeowner, 
+                 ld.without_current$LoanStatus.Bucket))
 ```
 
 
 ## BorrowerRate
 
-The interest rate (BorrowerRate) is higher for small loans. This was not expected as the mean amount for the unsuccessful loans was higher than for the successful therefore smaller loans seem to be less risky.
+The interest rate (BorrowerRate) is higher for small loans. This was not 
+expected as the mean amount for the unsuccessful loans was higher than for the 
+successful therefore smaller loans seem to be less risky.
 
 ```{r echo=FALSE, warning=FALSE}
 ggplot(ld, aes(y = BorrowerRate, x = LoanOriginalAmount)) + 
   geom_point(alpha = 1 / 100, color = myColor) +
-  geom_line(aes(y = BorrowerRate, x = round(LoanOriginalAmount / 500) * 500), stat = 'summary', fun.y = mean , color = "red")
+  geom_line(aes(y = BorrowerRate, x = round(LoanOriginalAmount / 500) * 500), 
+            stat = 'summary', fun.y = mean , color = "red")
 ```
 
 ```{r}
 cor.test(ld$BorrowerRate, ld$LoanOriginalAmount)
 ```
 
-Borrowers who stated a higher monthly income payed less interest. The correlations is not very strong.
+Borrowers who stated a higher monthly income payed less interest. 
+The correlations is not very strong.
 
 ```{r echo=FALSE,warning=FALSE,message=FALSE, fig.width=10}
 ggplot(ld, aes(x = StatedMonthlyIncome, y = BorrowerRate)) +
   geom_point(alpha = 1 / 75, color = myColor) +
   xlim(-1, quantile(ld$StatedMonthlyIncome, .95)) + 
   ylim(0, quantile(ld$BorrowerRate, 0.95)) + 
-  geom_line(aes(y = BorrowerRate, x = round(StatedMonthlyIncome / 100) * 100), stat = 'summary', fun.y = mean , color = "red")
+  geom_line(aes(y = BorrowerRate, x = round(StatedMonthlyIncome / 100) * 100), 
+            stat = 'summary', fun.y = mean , color = "red")
 ```
 
 ```{r echo=FALSE}
 cor.test(ld$BorrowerRate, ld$StatedMonthlyIncome)
 ```
 
-In plot shows that the interest rate goes down with higher monthly payments. This is not expected since higher interest should lead to higher monthly payments. In the plot some steep "stripes" are visible that represent the correlation that is expected. These stripes should represent loans of the same amount and duration that just differ by the interest rate.
+In plot shows that the interest rate goes down with higher monthly payments. 
+This is not expected since higher interest should lead to higher monthly 
+payments. In the plot some steep "stripes" are visible that represent the 
+correlation that is expected. These stripes should represent loans of the same 
+amount and duration that just differ by the interest rate.
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, fig.width=10}
 ggplot(ld, aes(x = MonthlyLoanPayment, y = BorrowerRate)) +
@@ -846,20 +1033,15 @@ ggplot(ld, aes(x = MonthlyLoanPayment, y = BorrowerRate)) +
              color = myColor
              ) +
   ylim(0, quantile(ld$BorrowerRate, 0.99)) + 
-  geom_line(aes(y = BorrowerRate, x = round(MonthlyLoanPayment / 100) * 100), stat = 'summary', fun.y = mean , color = "red")
+  geom_line(aes(y = BorrowerRate, x = round(MonthlyLoanPayment / 100) * 100), 
+            stat = 'summary', fun.y = mean , color = "red")
 ```
 
 ```{r echo=FALSE}
 cor.test(ld$BorrowerRate, ld$MonthlyLoanPayment)
 ```
 
-The following plot shows the relationship between the monthly payment and the amount dependent on the term of the loan. There is a difference in the relationship starting at loans grater than 25,000 USD. The width of the distribution is narrowing. Like in the chart plotting the loan amount towards the interest rate there is less variance after 25,000 USD. 
 
-```{r echo=FALSE, fig.width=8}
-ggplot(ld, aes(y = LoanOriginalAmount, x = MonthlyLoanPayment, color = as.factor(Term))) + 
-  geom_point(alpha = 0.1) + 
-  ggtitle("Relationship of Amount, MonthlyPayment and Duration")
-```
 
 The not successful loans usually had to pay an higher interest rate.
 
@@ -875,7 +1057,8 @@ ggplot(ld, aes(x = IsEmployed, y = BorrowerRate)) +
   geom_boxplot(fill = myColor, alpha = 0.5)
 ```
 
-Doctors pay the lowest interest on average. The Military Officer who had the best reliability only makes 13th place. 
+Doctors pay the lowest interest on average. The Military Officer who had the 
+best reliability only makes 13th place. 
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE}
 ld %>%
@@ -888,19 +1071,50 @@ ld %>%
   arrange(mean_interest)
 ```
 
+## No. of Investors and Success
+
+The plot shows how the successful and not successful loans are connected 
+through the numbers of investors. More investors mean a better chance of
+success.
+
+```{r echo=FALSE, error=FALSE, fig.width=10, message=FALSE, warning=FALSE}
+ggplot(subset(ld.without_current, Investors > 1), 
+       aes(x = Investors, fill = LoanStatus.Bucket)) + 
+  geom_histogram(binwidth = 3) +
+  xlim(0, quantile(ld.without_current$Investors, 0.99))
+```
+
+
+
+
 
 # Bivariate Analysis
 
 
-### Talk about some of the relationships you observed in this part of the investigation. How did the feature(s) of interest vary with other features in the dataset?
+### Talk about some of the relationships you observed in this part of the 
+### investigation. How did the feature(s) of interest vary with other features 
+### in the dataset?
 
-I found a relationship between the success that a loan will be payed back or not with several features. A higher ProsperScore was an indicator, as well as the StatedMonthlyIncome, the EmploymentStatus, the Occupation and the BorrowerRate. The Term (length) of the loan was most interesting for the (few) 1 year loans. The amount of the loan also seems to be not highly connected.
+I found a relationship between the success that a loan will be payed back or 
+not with several features. A higher ProsperScore was an indicator, as well as 
+the StatedMonthlyIncome, the EmploymentStatus, the Occupation and the 
+BorrowerRate. The Term (length) of the loan was most interesting for the 
+(few) 1 year loans. The amount of the loan also seems to be not highly 
+connected.
 
-The BorrowerRate (interest rate the borrower had to pay),vary with the ProsperScore, the StatedMonthlyIncome and the EmploymentStatus. The interest is also lower for loans with a higher amount. The rate also varies with the occupation.
+The BorrowerRate (interest rate the borrower had to pay), vary with the 
+ProsperScore, the StatedMonthlyIncome and the EmploymentStatus. The interest is 
+also lower for loans with a higher amount. The rate also varies with the
+occupation.
 
-### Did you observe any interesting relationships between the other features (not the main feature(s) of interest)?
+### Did you observe any interesting relationships between the other features 
+### (not the main feature(s) of interest)?
 
-The StatedMonthlyIncome and the LoanAmount are correlated. The stated monthly income for Loans greater than 25,000 USD was equal or above 8,333 USD a month. All lower loans also had borrowers without a stated income (or an stated income of 0 USD). Higher loans also mostly stated DeptRestruturing as the main purpose. This is surprising, as a high monthly income should secure other loans as well. 
+The StatedMonthlyIncome and the LoanAmount are correlated. The stated monthly 
+income for Loans greater than 25,000 USD was equal or above 8,333 USD a month. 
+All lower loans also had borrowers without a stated income (or an stated income 
+of 0 USD). Higher loans also mostly stated DeptRestruturing as the main purpose. 
+This is surprising, as a high monthly income should secure other loans as well. 
 
 
 ```{r}
@@ -909,10 +1123,13 @@ summary(subset(ld, LoanOriginalAmount > 25000)$StatedMonthlyIncome)
 
 
 ```{r echo=FALSE, warning=FALSE, message=FALSE, fig.height= 7, fig.width= 10}
-ggplot(ld, aes(x = LoanOriginalAmount, y = StatedMonthlyIncome, color = IsDeptRestructuring)) + 
+ggplot(ld, aes(x = LoanOriginalAmount, y = StatedMonthlyIncome, 
+               color = IsDeptRestructuring)) + 
   geom_point(alpha = 1 / 25) + 
   ylim(0, quantile(ld$StatedMonthlyIncome, 0.95)) + 
-  geom_line(aes(y = StatedMonthlyIncome, x = round(LoanOriginalAmount / 500) * 500), stat = 'summary', fun.y = mean , color = "red")
+  geom_line(aes(y = StatedMonthlyIncome, 
+                x = round(LoanOriginalAmount / 500) * 500), stat = 'summary', 
+            fun.y = mean , color = "red")
 ```
 
 ```{r echo=FALSE}
@@ -922,16 +1139,41 @@ cor.test(ld$StatedMonthlyIncome, ld$LoanOriginalAmount)
 
 ### What was the strongest relationship you found?
 
-The strongest relationships are those obviously needed by the business model. Higher loans correspond with higher monthly payments, as well as higher interest rates correspond with higher monthly payments. 
+The strongest relationships are those obviously needed by the business model. 
+Higher loans correspond with higher monthly payments, as well as higher 
+interest rates correspond with higher monthly payments. 
 
-Besides this, the 12 Month Term and the ProsperScore of 10 had a very strong relationship with the success of the loan.
+Besides this, the 12 Month Term and the ProsperScore of 10 had a very strong 
+relationship with the success of the loan.
 
 # Multivariate Plots Section
 
+## Term, Monthly Payment and Amount
+
+The following plot shows the relationship between the monthly payment and the 
+amount dependent on the term of the loan. There is a difference in the 
+relationship starting at loans grater than 25,000 USD. The width of the 
+distribution is narrowing. Like in the chart plotting the loan amount towards 
+the interest rate there is less variance after 25,000 USD. 
+
+```{r echo=FALSE, fig.width=8}
+ggplot(ld, aes(y = LoanOriginalAmount, x = MonthlyLoanPayment, 
+               color = as.factor(Term))) + 
+  geom_point(alpha = 0.1) + 
+  ggtitle("Relationship of Amount, MonthlyPayment and Duration")
+```
+
 ## Rate, Income and LoanAmount
 
+The following plot shows the distribution of the loans by the amount and the 
+stated monthly income. The color indicates the rate the borrower had to pay.
+The vertical stripes show the clusters around even amounts. The lighter colors
+in the "Not successful" facet show how the lower amounts and lower incomes
+were paying higher interest.
+
 ```{r plot_rate_income_amount, echo=FALSE, error=FALSE, fig.width=11, message=FALSE, warning=FALSE}
-ggplot(ld.without_current, aes(x = LoanOriginalAmount, y = StatedMonthlyIncome, color = BorrowerRate)) + 
+ggplot(ld.without_current, aes(x = LoanOriginalAmount, 
+                               y = StatedMonthlyIncome, color = BorrowerRate)) + 
   geom_point(alpha = 1 / 8) + 
   ylim(0, quantile(ld$StatedMonthlyIncome, 0.95)) +
   facet_wrap(~LoanStatus.Bucket)
@@ -939,33 +1181,87 @@ ggplot(ld.without_current, aes(x = LoanOriginalAmount, y = StatedMonthlyIncome, 
 
 ## Income, BorrowerRate, Success
 
+The following plot shows the distribution of the stated income and the rate the
+borrower had to pay. The two facets show the distribution for the successful and
+the not successful loans. The alpha level was adjusted to account for the
+different sizes of the facets. The successful facet shows a thick cluster 
+at a rate of 0.1 where there is only few in the not successful facet.
 
 ```{r echo=FALSE, error=FALSE, fig.width=11, message=FALSE, warning=FALSE}
 grid.arrange(
-  ggplot(subset(ld.without_current, LoanStatus.Bucket == "successful"), aes(x = BorrowerRate, y = StatedMonthlyIncome)) + 
+  ggplot(subset(ld.without_current, LoanStatus.Bucket == "successful"), 
+         aes(x = BorrowerRate, y = StatedMonthlyIncome)) + 
     geom_point(alpha = 1 / 70) + 
     ylim(0, quantile(ld$StatedMonthlyIncome, 0.95)) + 
-    ggtitle("successful Loans"),
-  ggplot(subset(ld.without_current, LoanStatus.Bucket == "Not successful"), aes(x = BorrowerRate, y = StatedMonthlyIncome)) + 
+    ggtitle("Successful Loans"),
+  ggplot(subset(ld.without_current, LoanStatus.Bucket == "Not successful"), 
+         aes(x = BorrowerRate, y = StatedMonthlyIncome)) + 
     geom_point(alpha = 1 / 35) + 
     ylim(0, quantile(ld$StatedMonthlyIncome, 0.95)) + 
-    ggtitle("Not successful Loans"))
+    ggtitle("Not Successful Loans"))
 ```
+
+### Borrower Rate, Prosper Score and Success
+The plot shows how the BorrowerRate, the ProsperScore and the success of 
+the loan correspond. The higher chance of success is easily spotted as well at 
+the lower interest rate borrowers had to pay with a higher prosper score.  
+
+```{r echo=FALSE, error=FALSE, fig.width=10, message=FALSE, warning=FALSE}
+ggplot(subset(ld.without_current, !is.na(LoanStatus.Bucket)), 
+       aes(x = ProsperScore, y = BorrowerRate, color = LoanStatus.Bucket)) +
+  geom_boxplot(alpha = 1 / 5)
+```
+
+### Employment, Categories and Success
+The plot shows the strong effect of the employment of the borrower and 
+how this distribution varies for different listing categories. The plot shows 
+that Debt Restructuring was mostly stated by employed, while unemployed often 
+also did not specify a listing category.
+
+```{r echo=FALSE, fig.width=12, message=FALSE, warning=FALSE}
+grid.arrange(
+  ggplot(ld.without_current, aes(x = IsEmployed, fill = LoanStatus.Bucket)) + 
+    geom_bar() + 
+    ggtitle("All Categories"),
+  ggplot(subset(ld.without_current, 
+                ld.without_current$ListingCategory..numeric. == 16), 
+         aes(x = IsEmployed, fill = LoanStatus.Bucket)) + 
+    geom_bar() + 
+    ggtitle("Listing Category Motor Cycle"),
+  ggplot(subset(ld.without_current, ListingCategory..numeric. == 1), 
+         aes(x = IsEmployed, fill = LoanStatus.Bucket)) + 
+    geom_bar() + 
+    ggtitle("Listing Category Debt Restructuring"),
+  ggplot(subset(ld.without_current, ListingCategory..numeric. == 0), 
+         aes(x = IsEmployed, fill = LoanStatus.Bucket)) + 
+    geom_bar() + 
+    ggtitle("Listing Category not specified")
+  )
+```
+
+
+
 
 # Multivariate Analysis
 
-### Talk about some of the relationships you observed in this part of the investigation. Were there features that strengthened each other in terms of looking at your feature(s) of interest?
+### Talk about some of the relationships you observed in this part of the 
+### investigation. Were there features that strengthened each other in terms of
+### looking at your feature(s) of interest?
 
 #### Employment and DebtRestructuring
 
-While the employment correlates with a better success chance and the purpose DeptRestructuring also had a better chance of success this was partly reversed when combining the two features. DeptRestructuring lead to an even better success chance for the employed, but lowered the chance for the unemployed. 
+While the employment correlates with a better success chance and the purpose 
+DeptRestructuring also had a better chance of success this was partly reversed 
+when combining the two features. DeptRestructuring lead to an even better 
+success chance for the employed, but lowered the chance for the unemployed. 
 
 ```{r table_employment, echo=FALSE}
 ld.without_current %>%
   group_by(IsEmployed) %>%
   summarise(
     success_ratio = sum(LoanStatus.Bucket == "successful") / 
-      (sum(LoanStatus.Bucket == "successful") + sum(LoanStatus.Bucket != "successful")),
+      (sum(LoanStatus.Bucket == "successful") + 
+         sum(LoanStatus.Bucket != "successful")),
     n = n()
   )
 ```
@@ -975,7 +1271,8 @@ ld.without_current %>%
   group_by(IsDeptRestructuring) %>%
   summarise(
     success_ratio = sum(LoanStatus.Bucket == "successful") / 
-      (sum(LoanStatus.Bucket == "successful") + sum(LoanStatus.Bucket != "successful")),
+      (sum(LoanStatus.Bucket == "successful") + 
+         sum(LoanStatus.Bucket != "successful")),
     n = n()
   )
 ```
@@ -986,17 +1283,22 @@ ld.without_current %>%
   group_by(IsEmployed, IsDeptRestructuring) %>%
   summarise(
     success_ratio = sum(LoanStatus.Bucket == "successful") / 
-      (sum(LoanStatus.Bucket == "successful") + sum(LoanStatus.Bucket != "successful")),
+      (sum(LoanStatus.Bucket == "successful") + 
+         sum(LoanStatus.Bucket != "successful")),
     n = n()
   )
 ```
 
 #### ProsperScore and StatedMonthlyIncome
 
-A prosper score and a higher monthly income correlate with a higher success chance. Combined the income is higher at ProsperScore 10. Even so at lower scores the difference in income for the successful and unsuccessful is bigger. Furthermore, there isn't a big difference in lower ProsperScores.
+A prosper score and a higher monthly income correlate with a higher success 
+chance. Combined the income is higher at ProsperScore 10. Even so at lower 
+scores the difference in income for the successful and unsuccessful is bigger. 
+Furthermore, there isn't a big difference in lower ProsperScores.
 
 ```{r plot_prosperscore_and_income, echo=FALSE, error=FALSE, fig.width=9, message=FALSE, warning=FALSE}
-ggplot(ld.without_current, aes(x = ProsperScore, y = StatedMonthlyIncome, color = LoanStatus.Bucket)) + 
+ggplot(ld.without_current, aes(x = ProsperScore, y = StatedMonthlyIncome, 
+                               color = LoanStatus.Bucket)) + 
   geom_boxplot() +
   ylim(0, quantile(ld.without_current$StatedMonthlyIncome, 0.95))
 ```
@@ -1005,60 +1307,103 @@ ggplot(ld.without_current, aes(x = ProsperScore, y = StatedMonthlyIncome, color 
 
 # Final Plots and Summary
 
-### Plot One
+### Plot One: Borrower Rate, Prosper Score and Success
 ```{r Plot_One, echo=FALSE, error=FALSE, fig.width=10, message=FALSE, warning=FALSE}
-ggplot(subset(ld.without_current, !is.na(LoanStatus.Bucket)), aes(x = ProsperScore, y = BorrowerRate, color = LoanStatus.Bucket)) +
-  geom_boxplot(alpha = 1 / 5)
-  # ylim(0, quantile(ld.without_current$StatedMonthlyIncome, 0.99))
+ggplot(subset(ld.without_current, !is.na(LoanStatus.Bucket)), 
+       aes(x = ProsperScore, y = BorrowerRate, color = LoanStatus.Bucket)) +
+  geom_boxplot(alpha = 1 / 5) +
+  ggtitle("Plot One: Borrower Rate, Prosper Score and Success") +
+  xlab("Prosper Score") +
+  ylab("Borrower Rate") +
+  theme(legend.title=element_blank())
 ```
 
 ### Description One
 
-The first plot shows how the BorrowerRate, the ProsperScore and the success of the loan correspond. The higher chance of success is easily spotted as well at the lower interest rate borrowers had to pay with a higher prosper score.  
+The first plot shows how the BorrowerRate, the ProsperScore and the success of 
+the loan correspond. The higher chance of success is easily spotted as well at 
+the lower interest rate borrowers had to pay with a higher prosper score.  Not 
+including the few instances in score 11, the score of 10 had the best chance.
 
 
-### Plot Two
+### Plot Two: Employment, Categories and Success
 ```{r Plot_Two, echo=FALSE, fig.width=12, message=FALSE, warning=FALSE}
 grid.arrange(
   ggplot(ld.without_current, aes(x = IsEmployed, fill = LoanStatus.Bucket)) + 
     geom_bar() + 
-    ggtitle("All Categories"),
-  ggplot(subset(ld.without_current, ld.without_current$ListingCategory..numeric. == 16), aes(x = IsEmployed, fill = LoanStatus.Bucket)) + 
+    xlab("Employment") +
+    ggtitle("All Categories") +
+    theme(legend.title=element_blank()),
+  ggplot(subset(ld.without_current, 
+                ld.without_current$ListingCategory..numeric. == 16), 
+         aes(x = IsEmployed, fill = LoanStatus.Bucket)) + 
     geom_bar() + 
-    ggtitle("Listing Category Motor Cycle"),
-  ggplot(subset(ld.without_current, ListingCategory..numeric. == 1), aes(x = IsEmployed, fill = LoanStatus.Bucket)) + 
+    xlab("Employment") +
+    ggtitle("Listing Category: Motor Cycle") + 
+    theme(legend.title=element_blank()),
+  ggplot(subset(ld.without_current, ListingCategory..numeric. == 1), 
+         aes(x = IsEmployed, fill = LoanStatus.Bucket)) + 
     geom_bar() + 
-    ggtitle("Listing Category Debt Restructuring"),
-  ggplot(subset(ld.without_current, ListingCategory..numeric. == 0), aes(x = IsEmployed, fill = LoanStatus.Bucket)) + 
+    xlab("Employment") +
+    ggtitle("Listing Category: Debt Restructuring") +
+    theme(legend.title=element_blank()),
+  ggplot(subset(ld.without_current, ListingCategory..numeric. == 0), 
+         aes(x = IsEmployed, fill = LoanStatus.Bucket)) + 
     geom_bar() + 
-    ggtitle("Listing Category not specified")
+    xlab("Employment") +
+    ggtitle("Listing Category: not specified") +
+    theme(legend.title=element_blank())
   )
 ```
 
 ### Description Two
 
-The second plot shows the strong effect of the employment of the borrower and how this distribution varies for different listing categories. The plot shows that Debt Restructuring was mostly stated by employed, while unemployed often also did not specify a listing category.
+The second plot shows the strong effect of the employment of the borrower and 
+how this distribution varies for different listing categories. The plot shows 
+that Debt Restructuring was mostly stated by employed, while unemployed often 
+also did not specify a listing category.
 
 ### Plot Three
 
 ```{r plot_three, echo=FALSE, error=FALSE, fig.width=10, message=FALSE, warning=FALSE}
-ggplot(subset(ld.without_current, Investors > 1), aes(x = Investors, fill = LoanStatus.Bucket)) + 
+ggplot(subset(ld.without_current, Investors > 1), 
+       aes(x = Investors, fill = LoanStatus.Bucket)) + 
   geom_histogram(binwidth = 3) +
-  xlim(0, quantile(ld.without_current$Investors, 0.99))
+  xlim(0, quantile(ld.without_current$Investors, 0.99)) +
+  ggtitle("Histogram of No. of Investors and the Success") + 
+  xlab("No. of Investors") +
+  theme(legend.title=element_blank())
 ```
 
 ### Description Three
 
-The third plot shows how the successful and not successful loans are connected through the numbers of investors. More investors mean a better chance of success.
+The third plot shows how the successful and not successful loans are connected 
+through the numbers of investors. More investors mean a better chance of
+success. The unsuccessful loans had on average 8 investors less than the 
+successful.
 
 ------
 
 # Reflection
 
-I was able to look at different features in the dataset. Many features are significant for the determination if the loan will be payed back or not but mostly the effect strength is small. Some features have a very high influence but the feature is only limited to few instances and therefore often not of great help. While loans with a term of 12 month were very successful, only few loans were in this subgroup. 
+I was able to look at different features in the dataset. Many features are 
+significant for the determination if the loan will be payed back or not but 
+mostly the effect strength is small. Some features have a very high influence 
+but the feature is only limited to few instances and therefore often not of 
+great help. While loans with a term of 12 month were very successful, only few 
+loans were in this subgroup. 
 
-The problem of determining whether a borrower will pay back it's loan or not remains difficult. The most widely available indicator for a success was if the borrower is employed.
+The problem of determining whether a borrower will pay back it's loan or not 
+remains difficult. The most widely available indicator for a success was if the 
+borrower is employed.
 
-Problematic with the dataset was also that most personal data are statements by the borrowers. They might made mistakes or lied.
+Problematic with the dataset was also that most personal data are statements by 
+the borrowers. They might made mistakes or lied.
 
-Furthermore, some of the features I analyzed are only interesting in hindsight, since a typical question would be to determine the credit worthiness of a new borrower to determine the adequate interest rate.    
+Furthermore, some of the features I analyzed are only interesting in hindsight, 
+since a typical question would be to determine the credit worthiness of a new 
+borrower to determine the adequate interest rate.
+
+Future questions might involve using some of the features to predict the success
+of the loan not yet closed. Besides this we might want to use a prediction to 
+fill in the blanks for some features, like the occupation of a borrower.
